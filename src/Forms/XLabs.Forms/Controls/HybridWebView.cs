@@ -21,6 +21,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
@@ -64,11 +65,39 @@ namespace XLabs.Forms.Controls
         /// <summary>
         /// The load content requested
         /// </summary>
-        internal EventHandler<LoadContentEventArgs> LoadContentRequested;
+        internal EventHandler<LoadContentEventArgs> LoadContentRequested;   
+        /// <summary>
+        /// The clear history requested
+        /// </summary>
+        internal EventHandler<EventArgs> ClearHistoryRequested;
+        /// <summary>
+        /// The go back requested
+        /// </summary>
+        internal EventHandler<GoBackEventArgs> GoBackRequested;
+        /// <summary>
+        /// The query can go back requested
+        /// </summary>
+        internal EventHandler<CanGoBackEventArgs> CanGoBackRequested;
         /// <summary>
         /// The load finished
         /// </summary>
-        public EventHandler LoadFinished;
+        public EventHandler<XLabs.EventArgs<Uri>> LoadFinished;
+
+
+        /// <summary>
+        /// The load progress
+        /// </summary>
+        public EventHandler<XLabs.EventArgs<int>> ProgressChanged;
+
+        /// <summary>
+        /// allows consumer to intercept requests
+        /// </summary>
+        public EventHandler<ShouldInterceptRequestEventArgs> ShouldInterceptRequest; 
+        
+        /// <summary>
+        /// allows consumer to handle calls to urls
+        /// </summary>
+        public EventHandler<ShouldOverrideUrlLoadingEventArgs> ShouldOverrideUrlLoading;
         /// <summary>
         /// The load from content requested
         /// </summary>
@@ -101,6 +130,7 @@ namespace XLabs.Forms.Controls
         /// The registered actions.
         /// </summary>
         private readonly Dictionary<string, Func<string, object[]>> registeredFunctions;
+
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HybridWebView" /> class.
@@ -163,6 +193,8 @@ namespace XLabs.Forms.Controls
             get { return (bool)GetValue (CleanupProperty); }
             set { SetValue (CleanupProperty, value); }
         }
+
+        internal object State { get; set; }
 
         /// <summary>
         /// Registers a native callback.
@@ -233,6 +265,55 @@ namespace XLabs.Forms.Controls
         }
 
         /// <summary>
+        /// Clears the history of the webview
+        /// </summary>
+        public void ClearHistory()
+        {
+            var handler = this.ClearHistoryRequested;
+            if (handler != null)
+            {
+                handler(this, EventArgs.Empty);
+            }
+        }
+
+        /// <summary>
+        /// goes back into the history.
+        /// </summary>
+        /// <returns>true if there was a history entry to go back to, otherwise false</returns>
+        public bool GoBack()
+        {
+            var handler = this.GoBackRequested;
+            if (handler != null)
+            {
+                GoBackEventArgs GoBackEventArgs = new GoBackEventArgs();
+                handler(this, GoBackEventArgs);
+                return GoBackEventArgs.CouldGoBack;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public bool CanGoBack
+        {
+            get
+            {
+                 var handler = this.CanGoBackRequested;
+                if (handler != null)
+                {
+                    CanGoBackEventArgs CanGoBackEventArgs = new CanGoBackEventArgs();
+                    handler(this, CanGoBackEventArgs);
+                    return CanGoBackEventArgs.CanGoBack;
+                }
+                else
+                {
+                    return false;
+                }               
+            }
+        }
+
+        /// <summary>
         /// Injects the java script.
         /// </summary>
         /// <param name="script">The script.</param>
@@ -243,7 +324,7 @@ namespace XLabs.Forms.Controls
                 var handler = this.JavaScriptLoadRequested;
                 if (handler != null)
                 {
-                    handler(this, script);
+                    handler(this, script.Replace('\r',' ').Replace('\n', ' '));
                 }
             }
         }
@@ -301,7 +382,7 @@ namespace XLabs.Forms.Controls
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        internal void OnLoadFinished(object sender, EventArgs e)
+        internal void OnLoadFinished(object sender, EventArgs<Uri> e)
         {
             var handler = this.LoadFinished;
             if (handler != null)
@@ -309,6 +390,25 @@ namespace XLabs.Forms.Controls
                 handler(this, e);
             }
         }
+
+        internal void OnShouldInterceptRequest(object sender, ShouldInterceptRequestEventArgs e)
+        {
+            var handler = this.ShouldInterceptRequest;
+            if (handler != null)
+            {
+                handler(this, e);
+            }
+        }
+
+        public void OnShouldOverrideUrlLoading(object sender, ShouldOverrideUrlLoadingEventArgs e)
+        {
+            var handler = this.ShouldOverrideUrlLoading;
+            if (handler != null)
+            {
+                handler(this, e);
+            }
+        }
+
 
         /// <summary>
         /// Handles the <see cref="E:LeftSwipe" /> event.
@@ -426,6 +526,60 @@ namespace XLabs.Forms.Controls
             public string Content { get; private set; }
             public string BaseUri { get; private set; }
         }
+
+        internal class GoBackEventArgs : EventArgs
+        {
+            public bool CouldGoBack { get; set; }
+        }
+        internal class CanGoBackEventArgs : EventArgs
+        {
+            public bool CanGoBack { get; set; }
+        }
+
+        public class ShouldInterceptRequestEventArgs : EventArgs
+        {
+            public Uri Uri { get; }
+            public IDictionary<string, string> RequestHeaders { get; }
+
+            public ResponseBase Response { get; set; }
+
+            public abstract class ResponseBase
+            {
+            }
+
+            public class ContentResponse : ResponseBase
+            {
+                public ContentResponse(string mimeType, string encoding, Stream data)
+                {
+                    this.MimeType = mimeType;
+                    this.Encoding = encoding;
+                    this.Data = data;
+                }
+
+                public string MimeType { get; }
+                public string Encoding { get; }
+                public Stream Data { get; }
+            }
+
+            public ShouldInterceptRequestEventArgs(Uri uri, IDictionary<string, string> requestHeaders)
+            {
+                this.Uri = uri;
+                this.RequestHeaders = requestHeaders;
+            }
+        }
+
+        public class ShouldOverrideUrlLoadingEventArgs
+        {
+            public Uri Uri { get; }
+
+            public bool Handled { get; set; }
+
+            public ShouldOverrideUrlLoadingEventArgs(Uri uri)
+            {
+                this.Uri = uri;
+            }
+        }
+
 
         /// <summary>
         /// Message class for transporting JSON objects.

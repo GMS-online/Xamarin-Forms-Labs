@@ -22,6 +22,7 @@
 using System;
 using System.Text;
 using System.Text.RegularExpressions;
+using Android.OS;
 
 namespace XLabs.Forms.Controls
 {
@@ -71,7 +72,10 @@ namespace XLabs.Forms.Controls
 
             if (e.PropertyName == HybridWebView.UriProperty.PropertyName)
             {
-                this.Load(this.Element.Uri);
+                if (this.internalUriUpdate == false)
+                {
+                    this.Load(this.Element.Uri);
+                }
             }
             else if (e.PropertyName == HybridWebView.SourceProperty.PropertyName)
             {
@@ -103,21 +107,30 @@ namespace XLabs.Forms.Controls
         {
             if (Element != null)
             {
-                if (this.Element.Uri != null)
+                if (Element.State != null)
                 {
-                    this.Load (this.Element.Uri);
+                    this.Control.RestoreState((Bundle)Element.State);
                 }
                 else
                 {
-                    LoadSource();
+                    if (this.Element.Uri != null)
+                    {
+                        this.Load(this.Element.Uri);
+                    }
+                    else
+                    {
+                        LoadSource();
+                    }
                 }
-
                 // There should only be one renderer and thus only one event handler registered.
                 // Otherwise, when Xamarin creates a new renderer, the old one stays attached
                 // and crashes when called!
                 this.Element.JavaScriptLoadRequested = OnInjectRequest;
                 this.Element.LoadFromContentRequested = LoadFromContent;
                 this.Element.LoadContentRequested = LoadContent;
+                this.Element.ClearHistoryRequested = ClearHistory;
+                this.Element.GoBackRequested = GoBack;
+                this.Element.CanGoBackRequested = CanGoBack;
             }
         }
 
@@ -142,9 +155,16 @@ namespace XLabs.Forms.Controls
         {
             if (oldElement != null)
             {
+                Bundle Bundle = new Bundle();
+                this.Control.SaveState(Bundle);
+                oldElement.State = Bundle;
+
                 oldElement.JavaScriptLoadRequested -= OnInjectRequest;
                 oldElement.LoadFromContentRequested -= LoadFromContent;
                 oldElement.LoadContentRequested -= LoadContent;
+                oldElement.ClearHistoryRequested -= ClearHistory;
+                oldElement.GoBackRequested -= GoBack;
+                oldElement.CanGoBackRequested -= CanGoBack;
                 oldElement.PropertyChanged -= this.OnElementPropertyChanged;
             }
         }
@@ -161,6 +181,10 @@ namespace XLabs.Forms.Controls
         partial void LoadFromContent(object sender, HybridWebView.LoadContentEventArgs contentArgs);
 
         partial void LoadContent(object sender, HybridWebView.LoadContentEventArgs contentArgs);
+
+        partial void ClearHistory(object sender, EventArgs args);
+        partial void GoBack(object sender, HybridWebView.GoBackEventArgs args);
+        partial void CanGoBack(object sender, HybridWebView.CanGoBackEventArgs args);
 
         partial void LoadFromString(string html);
 
@@ -227,5 +251,6 @@ namespace XLabs.Forms.Controls
                 System.Diagnostics.Debug.WriteLine("Unhandled callback {0} was called from JavaScript", function);
             }
         }
+
     }
 }

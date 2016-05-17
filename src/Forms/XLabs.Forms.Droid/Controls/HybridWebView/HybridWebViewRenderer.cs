@@ -20,6 +20,8 @@
 // 
 
 using System;
+using System.Collections.Generic;
+using System.IO;
 using Android.Runtime;
 using Android.Views;
 using Android.Webkit;
@@ -39,6 +41,7 @@ namespace XLabs.Forms.Controls
     /// </summary>
     public partial class HybridWebViewRenderer : ViewRenderer<HybridWebView, HybridWebViewRenderer.NativeWebView>
     {
+        
         /// <summary>
         /// Allows one to override the Webview Client class without a custom renderer.
         /// </summary>
@@ -48,6 +51,8 @@ namespace XLabs.Forms.Controls
         /// Allows one to override the Chrome Client class without a custom renderer.
         /// </summary>
         public static Func<HybridWebViewRenderer, ChromeClient> GetWebChromeClientDelegate;
+
+        private bool internalUriUpdate;
 
         /// <summary>
         /// Gets the desired size of the view.
@@ -83,7 +88,7 @@ namespace XLabs.Forms.Controls
                 webView.Settings.DomStorageEnabled = true;
 
                 //Turn off hardware rendering
-                webView.SetLayerType(LayerType.Software, null);
+                //webView.SetLayerType(LayerType.Software, null);
 
                 //Set the background color to transparent to fix an issue where the
                 //the picture would fail to draw
@@ -142,7 +147,7 @@ namespace XLabs.Forms.Controls
         {
             var d = GetWebChromeClientDelegate;
 
-            return d != null ? d(this) : new ChromeClient();
+            return d != null ? d(this) : new ChromeClient(this);
         }
 
         partial void HandleCleanup() 
@@ -154,12 +159,58 @@ namespace XLabs.Forms.Controls
             Control.RemoveJavascriptInterface ("Xamarin");
         }
 
-        private void OnPageFinished()
+        private void OnPageFinished(string url)
         {
             if (this.Element == null) return;
             this.Inject(NativeFunction);
             this.Inject(GetFuncScript());
-            this.Element.OnLoadFinished(this, EventArgs.Empty);
+
+            Uri Uri = new Uri(url);
+            this.internalUriUpdate = true;
+            try
+            {
+                //Update the URI of the current page
+                this.Element.Uri = Uri;
+            }
+            finally
+            {
+                this.internalUriUpdate = false;
+            }
+            this.Element.OnLoadFinished(this, new EventArgs<Uri>(Uri));
+        }
+
+        private WebResourceResponse OnShouldInterceptRequest(WebView view, IWebResourceRequest request)
+        {
+            if (this.Element == null) return null;
+            HybridWebView.ShouldInterceptRequestEventArgs Args = new HybridWebView.ShouldInterceptRequestEventArgs(new Uri(request.Url.ToString()), request.RequestHeaders);
+            this.Element.OnShouldInterceptRequest(this, Args);
+
+            if (Args.Response is HybridWebView.ShouldInterceptRequestEventArgs.ContentResponse)
+            {
+                var response = (HybridWebView.ShouldInterceptRequestEventArgs.ContentResponse) Args.Response;
+                return new WebResourceResponse(response.MimeType, response.Encoding, response.Data);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private bool ShouldOverrideUrlLoading(WebView view, string url)
+        {
+            if (this.Element == null) return false;
+
+            HybridWebView.ShouldOverrideUrlLoadingEventArgs Args = new HybridWebView.ShouldOverrideUrlLoadingEventArgs(new Uri(url));
+            this.Element.OnShouldOverrideUrlLoading(this, Args);
+
+            return Args.Handled;
+        }
+
+        private void OnProgressChanged(int newProgress)
+        {
+            if (this.Element == null) return;
+
+            this.Element.ProgressChanged(this, new EventArgs<int>(newProgress));
         }
 
         /// <summary>
@@ -208,6 +259,45 @@ namespace XLabs.Forms.Controls
             {
                 var baseUri = contentArgs.BaseUri ?? "file:///android_asset/";
                 this.Control.LoadDataWithBaseURL(baseUri, contentArgs.Content, "text/html", "UTF-8", null);
+            }
+        }   
+        
+        /// <summary>
+        /// Clears the history
+        /// </summary>
+        partial void ClearHistory(object sender, EventArgs args)
+        {
+            if (Control != null) 
+            {
+                this.Control.ClearHistory();
+            }
+        }   
+             
+        /// <summary>
+        /// Goes back in the history
+        /// </summary>
+        partial void GoBack(object sender, HybridWebView.GoBackEventArgs args)
+        {
+            args.CouldGoBack = false;
+            if (Control != null)
+            {
+                if (this.Control.CanGoBack())
+                {
+                    this.Control.GoBack();
+                    args.CouldGoBack = true;
+                }
+            }
+        }   
+        
+        /// <summary>
+        /// Goes back in the history
+        /// </summary>
+        partial void CanGoBack(object sender, HybridWebView.CanGoBackEventArgs args)
+        {
+            args.CanGoBack = false;
+            if (Control != null)
+            {
+                args.CanGoBack = this.Control.CanGoBack();
             }
         }
 
@@ -264,10 +354,56 @@ namespace XLabs.Forms.Controls
                 HybridWebViewRenderer hybrid;
                 if (this.WebHybrid != null && this.WebHybrid.TryGetTarget(out hybrid))
                 {
-                    hybrid.OnPageFinished();
+                    hybrid.OnPageFinished(url);
                 }
             }
+            
+            public override WebResourceResponse ShouldInterceptRequest(WebView view, IWebResourceRequest request)
+            {
+                HybridWebViewRenderer hybrid;
+                WebResourceResponse response=null;
+                if (this.WebHybrid != null && this.WebHybrid.TryGetTarget(out hybrid))
+                {
+                    response = hybrid.OnShouldInterceptRequest(view, request);
+                }
+                return response??base.ShouldInterceptRequest(view, request);
+            }
+
+            /// <param name="view">The WebView that is initiating the callback.</param><param name="url">The url to be loaded.</param>
+            /// <summary>
+            /// Give the host application a chance to take over the control when a new
+            ///  url is about to be loaded in the current WebView.
+            /// </summary>
+            /// <returns>
+            /// To be added.
+            /// </returns>
+            /// <remarks>
+            /// <para tool="javadoc-to-mdoc">
+            /// Give the host application a chance to take over the control when a new
+            ///  url is about to be loaded in the current WebView. If WebViewClient is not
+            ///  provided, by default WebView will ask Activity Manager to choose the
+            ///  proper handler for the url. If WebViewClient is provided, return true
+            ///  means the host application handles the url, while return false means the
+            ///  current WebView handles the url.
+            ///  This method is not called for requests using the POST "method".
+            /// </para>
+            /// <para tool="javadoc-to-mdoc">
+            /// <format type="text/html"><a href="http://developer.android.com/reference/android/webkit/WebViewClient.html#shouldOverrideUrlLoading(android.webkit.WebView, java.lang.String)" target="_blank">[Android Documentation]</a></format>
+            /// </para>
+            /// </remarks>
+            /// <since version="Added in API level 1"/>
+            public override bool ShouldOverrideUrlLoading(WebView view, string url)
+            {
+                HybridWebViewRenderer hybrid;
+                if (this.WebHybrid != null && this.WebHybrid.TryGetTarget(out hybrid))
+                {
+                    bool Handled = hybrid.ShouldOverrideUrlLoading(view, url);
+                    return Handled;
+                }
+                return base.ShouldOverrideUrlLoading(view, url);
+            }
         }
+
 
         /// <summary>
         /// Java callback class for JavaScript.
@@ -311,6 +447,21 @@ namespace XLabs.Forms.Controls
         public class ChromeClient : WebChromeClient 
         {
             /// <summary>
+            /// The web hybrid
+            /// </summary>
+            protected readonly WeakReference<HybridWebViewRenderer> WebHybrid;
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Client"/> class.
+            /// </summary>
+            /// <param name="webHybrid">The web hybrid.</param>
+            public ChromeClient(HybridWebViewRenderer webHybrid)
+            {
+                this.WebHybrid = new WeakReference<HybridWebViewRenderer>(webHybrid);
+            }
+
+
+            /// <summary>
             /// Overrides the geolocation prompt and accepts the permission.
             /// </summary>
             /// <param name="origin">Origin of the prompt.</param>
@@ -321,7 +472,18 @@ namespace XLabs.Forms.Controls
             {
                 callback.Invoke(origin, true, false);
             }
+
+            public override void OnProgressChanged(WebView view, int newProgress)
+            {
+                base.OnProgressChanged(view, newProgress);
+                HybridWebViewRenderer hybrid;
+                if (this.WebHybrid != null && this.WebHybrid.TryGetTarget(out hybrid))
+                {
+                    hybrid.OnProgressChanged(newProgress);
+                }
+            }
         }
+
 
         /// <summary>
         /// Class NativeWebView.
@@ -482,5 +644,6 @@ namespace XLabs.Forms.Controls
             }
         }
     }
+
 }
 
