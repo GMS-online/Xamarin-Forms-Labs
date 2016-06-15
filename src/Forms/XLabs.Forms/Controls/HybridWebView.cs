@@ -69,7 +69,11 @@ namespace XLabs.Forms.Controls
         /// <summary>
         /// The clear history requested
         /// </summary>
-        internal EventHandler<EventArgs> ClearHistoryRequested;
+        internal EventHandler<EventArgs> ClearHistoryRequested;  
+        /// <summary>
+        /// The reload requested
+        /// </summary>
+        internal EventHandler<EventArgs> ReloadRequested;
         /// <summary>
         /// The go back requested
         /// </summary>
@@ -270,6 +274,18 @@ namespace XLabs.Forms.Controls
         public void ClearHistory()
         {
             var handler = this.ClearHistoryRequested;
+            if (handler != null)
+            {
+                handler(this, EventArgs.Empty);
+            }
+        }
+
+        /// <summary>
+        /// Reloads the webview
+        /// </summary>
+        public void Reload()
+        {
+            var handler = this.ReloadRequested;
             if (handler != null)
             {
                 handler(this, EventArgs.Empty);

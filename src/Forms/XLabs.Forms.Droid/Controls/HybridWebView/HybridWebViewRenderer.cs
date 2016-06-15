@@ -271,6 +271,17 @@ namespace XLabs.Forms.Controls
             {
                 this.Control.ClearHistory();
             }
+        }       
+            
+        /// <summary>
+        /// reloads the page
+        /// </summary>
+        partial void Reload(object sender, EventArgs args)
+        {
+            if (Control != null) 
+            {
+                this.Control.Reload();
+            }
         }   
              
         /// <summary>

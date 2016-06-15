@@ -129,6 +129,7 @@ namespace XLabs.Forms.Controls
                 this.Element.LoadFromContentRequested = LoadFromContent;
                 this.Element.LoadContentRequested = LoadContent;
                 this.Element.ClearHistoryRequested = ClearHistory;
+                this.Element.ReloadRequested = Reload;
                 this.Element.GoBackRequested = GoBack;
                 this.Element.CanGoBackRequested = CanGoBack;
             }
@@ -163,6 +164,7 @@ namespace XLabs.Forms.Controls
                 oldElement.LoadFromContentRequested -= LoadFromContent;
                 oldElement.LoadContentRequested -= LoadContent;
                 oldElement.ClearHistoryRequested -= ClearHistory;
+                oldElement.ReloadRequested -= Reload;
                 oldElement.GoBackRequested -= GoBack;
                 oldElement.CanGoBackRequested -= CanGoBack;
                 oldElement.PropertyChanged -= this.OnElementPropertyChanged;
@@ -183,6 +185,7 @@ namespace XLabs.Forms.Controls
         partial void LoadContent(object sender, HybridWebView.LoadContentEventArgs contentArgs);
 
         partial void ClearHistory(object sender, EventArgs args);
+        partial void Reload(object sender, EventArgs args);
         partial void GoBack(object sender, HybridWebView.GoBackEventArgs args);
         partial void CanGoBack(object sender, HybridWebView.CanGoBackEventArgs args);
 
