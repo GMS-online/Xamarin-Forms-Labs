@@ -77,7 +77,7 @@ namespace XLabs.Forms.Controls
         {
             this.Inject(NativeFunction + GetFuncScript());
             //this.Inject(GetFuncScript());
-            Element.OnLoadFinished(sender, EventArgs.Empty);
+            Element.OnLoadFinished(sender, new EventArgs<Uri>(e.Uri));
         }
 
         /// <summary>
@@ -139,6 +139,26 @@ namespace XLabs.Forms.Controls
         partial void LoadFromString(string html)
         {
             Control.NavigateToString(html);
+        }
+
+        partial void CanGoBack(object sender, HybridWebView.CanGoBackEventArgs args)
+        {
+            throw new NotImplementedException();
+        }
+
+        partial void ClearHistory(object sender, EventArgs args)
+        {
+            throw new NotImplementedException();
+        }
+
+        partial void GoBack(object sender, HybridWebView.GoBackEventArgs args)
+        {
+            throw new NotImplementedException();
+        }
+
+        partial void Reload(object sender, EventArgs args)
+        {
+            throw new NotImplementedException();
         }
     }
 }

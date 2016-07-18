@@ -59,7 +59,7 @@ namespace XLabs.Forms.Controls
         private void WebViewOnNavigationCompleted(WebView sender, WebViewNavigationCompletedEventArgs args)
         {
             this.Inject(NativeFunction + GetFuncScript());
-            Element.OnLoadFinished(sender, EventArgs.Empty);
+            Element.OnLoadFinished(sender, new EventArgs<Uri>(args.Uri));
         }
 
         private void WebViewOnNavigationStarting(WebView sender, WebViewNavigationStartingEventArgs args)
@@ -126,6 +126,27 @@ namespace XLabs.Forms.Controls
         partial void LoadFromString(string html)
         {
             Control.NavigateToString(html);
+        }
+
+
+        partial void CanGoBack(object sender, HybridWebView.CanGoBackEventArgs args)
+        {
+            throw new NotImplementedException();
+        }
+
+        partial void ClearHistory(object sender, EventArgs args)
+        {
+            throw new NotImplementedException();
+        }
+
+        partial void GoBack(object sender, HybridWebView.GoBackEventArgs args)
+        {
+            throw new NotImplementedException();
+        }
+
+        partial void Reload(object sender, EventArgs args)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -69,7 +69,7 @@ namespace XLabs.Forms.Controls
         [Export("webView:didFinishNavigation:")]
         public void DidFinishNavigation(WKWebView webView, WKNavigation navigation)
         {
-            Element.OnLoadFinished(webView, EventArgs.Empty);
+            Element.OnLoadFinished(webView, new EventArgs<Uri>(webView.Url));
         }
 
         /// <summary>
@@ -218,6 +218,26 @@ namespace XLabs.Forms.Controls
         private static string GetTempDirectory()
         {
             return Environment.GetFolderPath(Environment.SpecialFolder.Personal).Replace("Documents", "tmp");
+        }
+
+        partial void CanGoBack(object sender, HybridWebView.CanGoBackEventArgs args)
+        {
+            throw new NotImplementedException();
+        }
+
+        partial void ClearHistory(object sender, EventArgs args)
+        {
+            throw new NotImplementedException();
+        }
+
+        partial void GoBack(object sender, HybridWebView.GoBackEventArgs args)
+        {
+            throw new NotImplementedException();
+        }
+
+        partial void Reload(object sender, EventArgs args)
+        {
+            throw new NotImplementedException();
         }
     }
 }

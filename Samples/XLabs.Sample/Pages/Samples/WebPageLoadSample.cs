@@ -115,7 +115,7 @@ namespace XLabs.Sample
         {
             var tcs = new TaskCompletionSource<bool>();
 
-            EventHandler e = null;
+            EventHandler<EventArgs<Uri>> e = null;
 
             e = (sender, args) =>
             {

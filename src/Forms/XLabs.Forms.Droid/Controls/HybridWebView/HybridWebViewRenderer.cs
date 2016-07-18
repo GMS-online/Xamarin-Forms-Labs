@@ -22,6 +22,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Android.Webkit;
@@ -52,7 +53,6 @@ namespace XLabs.Forms.Controls
         /// </summary>
         public static Func<HybridWebViewRenderer, ChromeClient> GetWebChromeClientDelegate;
 
-        private bool internalUriUpdate;
 
         /// <summary>
         /// Gets the desired size of the view.
@@ -634,26 +634,39 @@ namespace XLabs.Forms.Controls
                     return base.OnFling(e1, e2, velocityX, velocityY);
                 }
 
-//                public override bool OnScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
-//                {
-//                    Console.WriteLine("OnScroll");
-//                    return base.OnScroll(e1, e2, distanceX, distanceY);
-//                }
-//
-//                public override void OnShowPress(MotionEvent e)
-//                {
-//                    Console.WriteLine("OnShowPress");
-//                    base.OnShowPress(e);
-//                }
-//
-//                public override bool OnSingleTapConfirmed(MotionEvent e)
-//                {
-//                    Console.WriteLine("OnSingleTapConfirmed");
-//                    return base.OnSingleTapConfirmed(e);
-//                }
+
+                //                public override bool OnScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
+                //                {
+                //                    Console.WriteLine("OnScroll");
+                //                    return base.OnScroll(e1, e2, distanceX, distanceY);
+                //                }
+                //
+                //                public override void OnShowPress(MotionEvent e)
+                //                {
+                //                    Console.WriteLine("OnShowPress");
+                //                    base.OnShowPress(e);
+                //                }
+                //
+                //                public override bool OnSingleTapConfirmed(MotionEvent e)
+                //                {
+                //                    Console.WriteLine("OnSingleTapConfirmed");
+                //                    return base.OnSingleTapConfirmed(e);
+                //                }
 
             }
         }
+
+        partial void SaveState(HybridWebView oldElement)
+        {
+            Bundle Bundle = new Bundle();
+            this.Control.SaveState(Bundle);
+            oldElement.State = Bundle;
+        }
+        partial void RestoreState()
+        {
+            this.Control.RestoreState((Bundle)this.Element.State);
+        }
+
     }
 
 }

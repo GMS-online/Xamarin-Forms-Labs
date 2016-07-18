@@ -21,12 +21,16 @@
 
 using System.ComponentModel;
 using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using Microsoft.Phone.Controls;
 using Xamarin.Forms;
 using Xamarin.Forms.Platform.WinPhone;
 using XLabs.Forms.Controls;
 using XLabs.Forms.Extensions;
+using Color = Xamarin.Forms.Color;
+using TextAlignment = Xamarin.Forms.TextAlignment;
 
 [assembly: ExportRenderer(typeof(ExtendedEntry), typeof(ExtendedEntryRenderer))]
 namespace XLabs.Forms.Controls
@@ -58,11 +62,11 @@ namespace XLabs.Forms.Controls
             //Because Xamarin EntryRenderer switches the type of control we need to find the right one
             if (view.IsPassword)
             {
-                _thisPasswordBox = (PasswordBox) Control.Children.FirstOrDefault(c => c is PasswordBox);
+                _thisPasswordBox = (PasswordBox)  GetChild<PasswordBox>(Control);
             }
             else
             {
-                _thisPhoneTextBox = (PhoneTextBox) Control.Children.FirstOrDefault(c => c is PhoneTextBox);
+                _thisPhoneTextBox = (PhoneTextBox) GetChild<PhoneTextBox>(Control);
             }
 
             SetFont(view);
@@ -71,6 +75,20 @@ namespace XLabs.Forms.Controls
             SetPlaceholderTextColor(view);
             SetMaxLength(view);
 
+        }
+
+        private DependencyObject GetChild<T>( DependencyObject control)
+        {
+            int ChildCount = VisualTreeHelper.GetChildrenCount(control);
+            for (int Index = 0; Index < ChildCount; Index++)
+            {
+                DependencyObject Child = VisualTreeHelper.GetChild(control, Index);
+                if (Child is T)
+                {
+                    return Child;
+                }
+            }
+            return null;
         }
 
         /// <summary>

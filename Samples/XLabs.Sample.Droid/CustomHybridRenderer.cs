@@ -58,6 +58,10 @@ namespace XLabs.Sample.Droid
             System.Diagnostics.Debug.WriteLine("Webview progress: " + newProgress);
             base.OnProgressChanged(view, newProgress);
         }
+
+        public CustomChromeClient(HybridWebViewRenderer webHybrid) : base(webHybrid)
+        {
+        }
     }
 }
 

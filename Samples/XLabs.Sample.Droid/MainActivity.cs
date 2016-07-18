@@ -61,7 +61,7 @@ namespace XLabs.Sample.Droid
             }
 
             XLabs.Forms.Controls.HybridWebViewRenderer.GetWebViewClientDelegate = r => new CustomClient(r);
-            XLabs.Forms.Controls.HybridWebViewRenderer.GetWebChromeClientDelegate = r => new CustomChromeClient();
+            XLabs.Forms.Controls.HybridWebViewRenderer.GetWebChromeClientDelegate = r => new CustomChromeClient(r);
 
             if (!Resolver.IsSet)
             {

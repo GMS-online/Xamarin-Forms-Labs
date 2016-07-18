@@ -22,7 +22,6 @@
 using System;
 using System.Text;
 using System.Text.RegularExpressions;
-using Android.OS;
 
 namespace XLabs.Forms.Controls
 {
@@ -30,6 +29,9 @@ namespace XLabs.Forms.Controls
 
     public partial class HybridWebViewRenderer
     {
+
+        private bool internalUriUpdate;
+
 
 #if WINDOWS_PHONE || NETFX_CORE
         private const string NativeFuncCall = "window.external.notify";
@@ -109,7 +111,7 @@ namespace XLabs.Forms.Controls
             {
                 if (Element.State != null)
                 {
-                    this.Control.RestoreState((Bundle)Element.State);
+                    this.RestoreState();
                 }
                 else
                 {
@@ -156,9 +158,7 @@ namespace XLabs.Forms.Controls
         {
             if (oldElement != null)
             {
-                Bundle Bundle = new Bundle();
-                this.Control.SaveState(Bundle);
-                oldElement.State = Bundle;
+                this.SaveState(oldElement);
 
                 oldElement.JavaScriptLoadRequested -= OnInjectRequest;
                 oldElement.LoadFromContentRequested -= LoadFromContent;
@@ -193,6 +193,8 @@ namespace XLabs.Forms.Controls
 
         partial void HandleCleanup();
 
+        partial void SaveState(HybridWebView oldElement);
+        partial void RestoreState();
 
 
         //private bool CheckRequest(string request)
