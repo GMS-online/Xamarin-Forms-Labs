@@ -85,23 +85,23 @@ namespace XLabs.Forms.Controls
         /// <summary>
         /// The load finished
         /// </summary>
-        public EventHandler<XLabs.EventArgs<Uri>> LoadFinished;
+        public event EventHandler<XLabs.EventArgs<Uri>> LoadFinished;
 
 
         /// <summary>
         /// The load progress
         /// </summary>
-        public EventHandler<XLabs.EventArgs<int>> ProgressChanged;
+        public event EventHandler<XLabs.EventArgs<int>> ProgressChanged;
 
         /// <summary>
         /// allows consumer to intercept requests
         /// </summary>
-        public EventHandler<ShouldInterceptRequestEventArgs> ShouldInterceptRequest; 
+        public event EventHandler<ShouldInterceptRequestEventArgs> ShouldInterceptRequest; 
         
         /// <summary>
         /// allows consumer to handle calls to urls
         /// </summary>
-        public EventHandler<ShouldOverrideUrlLoadingEventArgs> ShouldOverrideUrlLoading;
+        public event EventHandler<ShouldOverrideUrlLoadingEventArgs> ShouldOverrideUrlLoading;
         /// <summary>
         /// The load from content requested
         /// </summary>
@@ -109,11 +109,11 @@ namespace XLabs.Forms.Controls
         /// <summary>
         /// The navigating
         /// </summary>
-        public EventHandler<XLabs.EventArgs<Uri>> Navigating;
+        public event EventHandler<XLabs.EventArgs<Uri>> Navigating;
         /// <summary>
         /// The right swipe
         /// </summary>
-        public EventHandler RightSwipe;
+        public event EventHandler RightSwipe;
 
         /// <summary>
         /// The inject lock.
@@ -609,6 +609,14 @@ namespace XLabs.Forms.Controls
             public object Data { get; set; }
             [DataMember(Name="c")]
             public string Callback { get; set; }
+        }
+
+        /// <summary>
+        /// Fires the progresschanged event
+        /// </summary>
+        public void OnProgressChanged(EventArgs<int> e)
+        {
+            this.ProgressChanged?.Invoke(this, e);
         }
     }
 }

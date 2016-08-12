@@ -210,7 +210,7 @@ namespace XLabs.Forms.Controls
         {
             if (this.Element == null) return;
 
-            this.Element.ProgressChanged(this, new EventArgs<int>(newProgress));
+            this.Element.OnProgressChanged(new EventArgs<int>(newProgress));
         }
 
         /// <summary>
@@ -221,7 +221,7 @@ namespace XLabs.Forms.Controls
         {
             if (Control != null) 
             {
-                this.Control.LoadUrl(string.Format("javascript: {0}", script));
+                this.Control.EvaluateJavascript(script,null);
             }
         }
 
@@ -368,7 +368,12 @@ namespace XLabs.Forms.Controls
                     hybrid.OnPageFinished(url);
                 }
             }
-            
+
+            public override void OnPageCommitVisible(WebView view, string url)
+            {
+                base.OnPageCommitVisible(view, url);
+            }
+
             public override WebResourceResponse ShouldInterceptRequest(WebView view, IWebResourceRequest request)
             {
                 HybridWebViewRenderer hybrid;
@@ -484,6 +489,21 @@ namespace XLabs.Forms.Controls
                 callback.Invoke(origin, true, false);
             }
 
+            /// <param name="view">The WebView that initiated the callback.</param><param name="newProgress">Current page loading progress, represented by
+            ///                     an integer between 0 and 100.
+            /// </param>
+            /// <summary>
+            /// Tell the host application the current progress of loading a page.
+            /// </summary>
+            /// <remarks>
+            /// <para tool="javadoc-to-mdoc">
+            /// Tell the host application the current progress of loading a page.
+            /// </para>
+            /// <para tool="javadoc-to-mdoc">
+            /// <format type="text/html"><a href="http://developer.android.com/reference/android/webkit/WebChromeClient.html#onProgressChanged(android.webkit.WebView, int)" target="_blank">[Android Documentation]</a></format>
+            /// </para>
+            /// </remarks>
+            /// <since version="Added in API level 1"/>
             public override void OnProgressChanged(WebView view, int newProgress)
             {
                 base.OnProgressChanged(view, newProgress);
